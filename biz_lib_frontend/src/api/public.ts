@@ -8,3 +8,9 @@ export const uploadImage = (file: string | Blob) => {
         body: formData
     })
 }
+
+export const getUploadToken = (filename: string) => {
+    return customFetch(`/bizyair/community/get_upload_token?filename=${filename}`, {
+        method: 'GET'
+    })
+}

@@ -316,6 +316,26 @@ class BizyAirServer:
 
             return OKResponse(resp)
 
+        @self.prompt_server.routes.get(f"/{COMMUNITY_API}/get_upload_token")
+        async def get_upload_token(request):
+            filename = request.rel_url.query.get("filename")
+            if not filename:
+                return ErrResponse(errnos.INVALID_FILENAME)
+            # 获取上传凭证
+            sign_data, err = await self.api_client.sign(filename)
+            if err:
+                return ErrResponse(err)
+            
+            return OKResponse({
+                'accessKeyId': sign_data['file']['access_key_id'],
+                'accessKeySecret': sign_data['file']['access_key_secret'], 
+                'securityToken': sign_data['file']['security_token'],
+                'endpoint': sign_data['storage']['endpoint'],
+                'bucket': sign_data['storage']['bucket'],
+                'objectKey': sign_data['file']['object_key'],
+                'region': sign_data['storage']['region']
+            })
+
         @self.prompt_server.routes.get(f"/{COMMUNITY_API}/models/{{model_id}}/detail")
         async def get_model_detail(request):
             # 获取路径参数中的模型ID

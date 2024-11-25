@@ -65,7 +65,13 @@
                 <Label for="airplane-mode">Publicly Visible</Label>
               </div>
             </v-item>
-            <v-item label="File Path">
+            <v-item label="File">
+              <uploader
+                :ref="el => e.uploaderRef = el"
+                @progress="e.progress = $event"
+              />
+            </v-item>
+            <!-- <v-item label="File Path">
               <div class="flex">
                 <Input
                   :class="{'border-red-500': e.filePathError}"
@@ -76,7 +82,7 @@
                   v-model:model-value="e.filePath" />
                 <Button @click="interrupt(e)" class="ml-2" :disabled="!e.progress || e.progress == 100">interrupt</Button>
               </div>
-            </v-item>
+            </v-item> -->
             <div v-if="e.progress">
               <Progress :model-value="e.progress" class="mt-4 h-3" />
               <p class="text-center mt-2">{{ e.progress }}% Uploaded</p>
@@ -119,6 +125,7 @@ import Markdown from '@/components/markdown/Index2.vue'
 import { create_models, checkLocalFile, submitUpload, model_types, base_model_types, put_model, interrupt_upload } from '@/api/model'
 import { onMounted } from 'vue'
 import { Minus } from 'lucide-vue-next'
+import uploader from '@/views/btnModel/uploader.vue'
 
 const statusStore = useStatusStore();
 const modelStoreObject = modelStore();
@@ -232,14 +239,14 @@ function verifyVersion() {
       acActiveIndex.value = `${i}`
       break
     }
-    if (!e.filePath) {
-      e.filePathError = true
-      useToaster.error(`Please enter the file path for version ${i + 1}`)
-      acActiveIndex.value = `${i}`
-      break
-    }
+    // if (!e.filePath) {
+    //   e.filePathError = true
+    //   useToaster.error(`Please enter the file path for version ${i + 1}`)
+    //   acActiveIndex.value = `${i}`
+    //   break
+    // }
   }
-  return tempData.versions.every((e: any) => e.version && e.base_model && e.filePath)
+  return tempData.versions.every((e: any) => e.version && e.base_model)
 }
 
 async function interrupt ({ file_upload_id }: any) {
@@ -252,6 +259,20 @@ async function submit() {
   if (!verifyVersion()) {
     return
   }
+  const versions = formData.value.versions
+  versions.forEach(async (ver:any, i:number)=>{
+   try {
+      const ossRes = await ver.uploaderRef.startUpload()
+      const ossFilepath = ossRes.requestUrls[0];
+      // 上传完成
+      console.log('Uploaded', ossFilepath, ossRes, ver);
+    } catch (error:any) {
+      console.error(error)
+      // 上传过程中报错
+      error && useToaster.error(`Version ${i + 1}: ${error.message}`)
+   }
+  })
+  return;
   showLayoutLoading.value = true
   setTimeout(() => {
     showLayoutLoading.value = false

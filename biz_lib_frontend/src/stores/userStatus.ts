@@ -30,7 +30,9 @@ export const useStatusStore = defineStore('userStatus', {
       })
     },
     sendSocket() {
-      const wsClient = new WebSocketClient(`ws://${location.host}/bizyair/ws?clientId=${sessionStorage.getItem('clientId')}`, []);
+      // 用户部署环境可能是 http，也可能是 https，所以需要根据实际情况来判断
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsClient = new WebSocketClient(`${protocol}//${location.host}/bizyair/ws?clientId=${sessionStorage.getItem('clientId') || 'dev'}`, []);
       wsClient.onMessage = message => {
           const res = JSON.parse(message.data);
           this.socketMessage = res;
